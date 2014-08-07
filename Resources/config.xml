@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Settings>
+    <References>
+      <Update>false</Update>
+      <NewPath></NewPath>
+    </References>
+  </Settings>
+  <References>
+    <Reference>
+      <Name>LeagueSharp</Name>
+    </Reference>
+    <Reference>
+      <Name>SharpDX</Name>
+    </Reference>
+    <Reference>
+      <Name>LeagueSharp.Common</Name>
+    </Reference>
+    <Reference>
+      <Name>clipper_library</Name>
+    </Reference>
+    <Reference>
+      <Name>Igniter</Name>
+    </Reference>
+  </References>
+  <Repositories>
+    <Repository Enabled="true">
+      <Info>Awesome Dude</Info>
+      <Author>Lizzaran</Author>
+      <Url>https://github.com/Lizzaran/LeagueSharp</Url>
+    </Repository>
+  </Repositories>
+</Config>
