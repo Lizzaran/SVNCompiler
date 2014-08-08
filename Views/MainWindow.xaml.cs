@@ -15,15 +15,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Evaluation;
-using SharpSvn;
+using SVNCompiler.Class;
+using SVNCompiler.Data;
 using Application = System.Windows.Application;
 using Button = System.Windows.Controls.Button;
 using ContextMenu = System.Windows.Controls.ContextMenu;
 using DataGrid = System.Windows.Controls.DataGrid;
 using MenuItem = System.Windows.Controls.MenuItem;
-using Project = Microsoft.Build.Evaluation.Project;
 using TextBox = System.Windows.Controls.TextBox;
 
 /*
@@ -50,9 +49,9 @@ namespace SVNCompiler.Views
     /// </summary>
     public partial class MainWindow : INotifyPropertyChanged
     {
-        private readonly string BuildDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Builds");
-        private readonly string LogDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
-        private readonly string RepositoryDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Repositories");
+        private readonly string _buildDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Builds");
+        private readonly string _logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+        private readonly string _repositoryDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Repositories");
 
         private Log _compileLog = new Log();
         private int _compileMaximum;
@@ -178,7 +177,7 @@ namespace SVNCompiler.Views
                         IList rows = dataGrid.SelectedItems;
                         for (int i = rows.Count; i-- > 0;)
                         {
-                            string dir = Path.Combine(RepositoryDir,
+                            string dir = Path.Combine(_repositoryDir,
                                 ((ConfigRepository) rows[i]).Url.GetHashCode().ToString("X"));
                             if (Directory.Exists(dir))
                             {
@@ -201,53 +200,11 @@ namespace SVNCompiler.Views
                     () => OnProgressStart(UpdateButton, UpdateLog, () => UpdateProgress));
                 if (Config.Repositories.Count == 0)
                 {
-                    Log(LogStatus.Info, "No Repositories", () => UpdateLog);
+                    Utility.Log(LogStatus.Info, "No Repositories", UpdateLog);
                 }
                 Parallel.ForEach(Config.Repositories, repository =>
                 {
-                    if (!repository.Enabled)
-                    {
-                        Log(LogStatus.Skipped, string.Format("Disabled - {0}", repository.Url), () => UpdateLog);
-                    }
-                    else if (string.IsNullOrWhiteSpace(repository.Url))
-                    {
-                        Log(LogStatus.Skipped, string.Format("No Url specified - {0}", repository.Url), () => UpdateLog);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            string dir = Path.Combine(RepositoryDir, repository.Url.GetHashCode().ToString("X"));
-                            using (var client = new SvnClient())
-                            {
-                                bool cleanUp = false;
-                                client.Status(dir, new SvnStatusArgs {ThrowOnError = false},
-                                    delegate(object sender, SvnStatusEventArgs args)
-                                    {
-                                        if (args.Wedged)
-                                        {
-                                            cleanUp = true;
-                                        }
-                                    });
-                                if (cleanUp)
-                                {
-                                    client.CleanUp(dir);
-                                }
-                                client.CheckOut(new Uri(repository.Url), dir);
-                                client.Update(dir);
-                                Log(LogStatus.Ok, string.Format("Updated - {0}", repository.Url), () => UpdateLog);
-                            }
-                        }
-                        catch (SvnException ex)
-                        {
-                            Log(LogStatus.Error, string.Format("{0} - {1}", ex.RootCause, repository.Url),
-                                () => UpdateLog);
-                        }
-                        catch (Exception ex)
-                        {
-                            Log(LogStatus.Error, string.Format("{0} - {1}", ex.Message, repository.Url), () => UpdateLog);
-                        }
-                    }
+                    SvnUpdater.Update(repository, UpdateLog, _repositoryDir);
                     Application.Current.Dispatcher.Invoke(() => UpdateProgress++);
                 });
             };
@@ -268,26 +225,39 @@ namespace SVNCompiler.Views
             {
                 Application.Current.Dispatcher.Invoke(
                     () => OnProgressStart(CompileButton, CompileLog, () => CompileProgress));
-                Utility.ClearDirectory(LogDir);
-                Utility.ClearDirectory(BuildDir);
-                if (Directory.Exists(RepositoryDir))
+                Utility.ClearDirectory(_logDir);
+                Utility.ClearDirectory(_buildDir);
+                if (Directory.Exists(_repositoryDir))
                 {
                     List<string> projectFiles = GetProjectFiles();
                     if (!projectFiles.Any())
                     {
-                        Log(LogStatus.Error, "No *.csproj files found", () => CompileLog);
+                        Utility.Log(LogStatus.Error, "No *.csproj files found", CompileLog);
                     }
                     Application.Current.Dispatcher.Invoke(() => CompileMaximum = projectFiles.Count());
                     foreach (string projectFile in projectFiles)
                     {
-                        UpateProjectFile(projectFile, selectedConfiguration, selectedPlatform);
-                        MoveCompiledFile(CompileProjectFile(projectFile));
+                        var pf = new ProjectFile(projectFile, CompileLog)
+                        {
+                            Configuration = selectedConfiguration,
+                            PlatformTarget = selectedPlatform,
+                            ReferencesPath = Config.Settings.References.NewPath,
+                            UpdateReferences = Config.Settings.References.Update,
+                            PostbuildEvent = true,
+                            PrebuildEvent = true
+                        };
+                        pf.Change();
+                        string logFile = Path.Combine(_logDir,
+                            Utility.MakeValidFileName(Path.ChangeExtension(pf.Project.FullPath, "txt")
+                                .Remove(0, _repositoryDir.Length)));
+                        Compiler.Compile(pf.Project, logFile, CompileLog);
+                        MoveCompiledFile(Compiler.GetOutputFilePath(pf.Project));
                         Application.Current.Dispatcher.Invoke(() => CompileProgress++);
                     }
                 }
                 else
                 {
-                    Log(LogStatus.Error, "No *.csproj files found", () => CompileLog);
+                    Utility.Log(LogStatus.Error, "No *.csproj files found", CompileLog);
                 }
             };
             bw.RunWorkerCompleted += (sender, args) =>
@@ -303,7 +273,7 @@ namespace SVNCompiler.Views
             var projectFiles = new List<string>();
             foreach (ConfigRepository repository in Config.Repositories)
             {
-                string dir = Path.Combine(RepositoryDir, repository.Url.GetHashCode().ToString("X"), "trunk");
+                string dir = Path.Combine(_repositoryDir, repository.Url.GetHashCode().ToString("X"), "trunk");
                 if (Directory.Exists(dir))
                 {
                     projectFiles.AddRange(Directory.GetFiles(dir, "*.csproj", SearchOption.AllDirectories));
@@ -318,122 +288,19 @@ namespace SVNCompiler.Views
             {
                 if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
                 {
-                    if (!Directory.Exists(BuildDir))
+                    if (!Directory.Exists(_buildDir))
                     {
-                        Directory.CreateDirectory(BuildDir);
+                        Directory.CreateDirectory(_buildDir);
                     }
-                    string newPath = Path.Combine(BuildDir, Path.GetFileName(path));
+                    string newPath = Path.Combine(_buildDir, Path.GetFileName(path));
                     File.Copy(path, newPath);
-                    Log(File.Exists(newPath) ? LogStatus.Ok : LogStatus.Error,
-                        string.Format("Move - {0} | {1}", path, newPath), () => CompileLog);
+                    Utility.Log(File.Exists(newPath) ? LogStatus.Ok : LogStatus.Error,
+                        string.Format("Move - {0} | {1}", path, newPath), CompileLog);
                 }
             }
             catch (Exception ex)
             {
-                Log(LogStatus.Error, ex.Message.ToString(CultureInfo.InvariantCulture), () => CompileLog);
-            }
-        }
-
-        private string CompileProjectFile(string path)
-        {
-            try
-            {
-                ProjectCollection projectCollection = ProjectCollection.GlobalProjectCollection;
-                ICollection<Project> searchProjects = projectCollection.GetLoadedProjects(path);
-                Project project = searchProjects.Count == 0 ? null : searchProjects.First();
-                if (project != null)
-                {
-                    if (!Directory.Exists(LogDir))
-                    {
-                        Directory.CreateDirectory(LogDir);
-                    }
-                    string logFile = Path.Combine(LogDir,
-                        Utility.MakeValidFileName(Path.ChangeExtension(path, "txt")
-                            .Remove(0,
-                                RepositoryDir.Length)));
-                    var fileLogger = new FileLogger
-                    {
-                        Parameters = @"logfile=" + logFile,
-                        ShowSummary = true
-                    };
-                    projectCollection.RegisterLogger(fileLogger);
-                    bool result = project.Build();
-                    projectCollection.UnregisterAllLoggers();
-                    Log(result ? LogStatus.Ok : LogStatus.Error, string.Format("Compile - {0}", path), () => CompileLog);
-                    if (!result)
-                    {
-                        if (File.Exists(logFile))
-                        {
-                            File.Move(logFile,
-                                Path.Combine(Path.GetDirectoryName(logFile), ("Error - " + Path.GetFileName(logFile))));
-                        }
-                    }
-                    string extension = project.GetPropertyValue("OutputType") == "Exe"
-                        ? ".exe"
-                        : (project.GetPropertyValue("OutputType") == "Library" ? ".dll" : string.Empty);
-                    return Path.Combine(Path.GetDirectoryName(path), project.GetPropertyValue("OutputPath")) +
-                           (project.GetPropertyValue("AssemblyName") + extension);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log(LogStatus.Error, ex.Message.ToString(CultureInfo.InvariantCulture), () => CompileLog);
-            }
-            return string.Empty;
-        }
-
-        private void UpateProjectFile(string path, string selectedConfiguration, string selectedPlatform)
-        {
-            try
-            {
-                ProjectCollection projectCollection = ProjectCollection.GlobalProjectCollection;
-                ICollection<Project> searchProjects = projectCollection.GetLoadedProjects(path);
-                Project project = searchProjects.Count == 0 ? new Project(path) : searchProjects.First();
-                ProjectProperty configuration = project.GetProperty("Configuration");
-                if (configuration == null || configuration.EvaluatedValue != selectedConfiguration)
-                {
-                    project.SetProperty("Configuration", selectedConfiguration);
-                    project.Save();
-                }
-                project.SetProperty("PreBuildEvent", string.Empty);
-                project.SetProperty("PostBuildEvent", string.Empty);
-                project.SetProperty("PlatformTarget", selectedPlatform);
-                if (Config.Settings.References.Update)
-                {
-                    foreach (ProjectItem item in project.GetItems("Reference"))
-                    {
-                        if (item == null)
-                            continue;
-                        ProjectMetadata hintPath = item.GetMetadata("HintPath");
-                        if (hintPath != null && !string.IsNullOrWhiteSpace(hintPath.EvaluatedValue))
-                        {
-                            item.SetMetadataValue("HintPath",
-                                Path.Combine(Config.Settings.References.NewPath,
-                                    Path.GetFileName(hintPath.EvaluatedValue)));
-                        }
-                    }
-                    Log(LogStatus.Ok, string.Format("References Updated - {0}", path), () => CompileLog);
-                }
-                project.Save();
-                Log(LogStatus.Ok, string.Format("File Updated - {0}", path), () => CompileLog);
-            }
-            catch (Exception ex)
-            {
-                Log(LogStatus.Error, ex.Message.ToString(CultureInfo.InvariantCulture), () => CompileLog);
-            }
-        }
-
-        private void Log<T>(string status, string message, Expression<Func<T>> log)
-        {
-            var propertyInfo = ((MemberExpression) log.Body).Member as PropertyInfo;
-            if (propertyInfo != null)
-            {
-                Application.Current.Dispatcher.Invoke(
-                    () => ((Log) propertyInfo.GetValue(this, null)).Items.Add(new LogItem
-                    {
-                        Status = status,
-                        Message = message
-                    }));
+                Utility.Log(LogStatus.Error, ex.Message.ToString(CultureInfo.InvariantCulture), CompileLog);
             }
         }
 

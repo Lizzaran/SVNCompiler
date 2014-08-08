@@ -1,11 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml.Serialization;
-
-/*
+﻿/*
     Copyright (C) 2014 Nikita Bernthaler
 
     This program is free software: you can redistribute it and/or modify
@@ -21,10 +14,18 @@ using System.Xml.Serialization;
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+using System;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Xml.Serialization;
+using SVNCompiler.Data;
 
-namespace SVNCompiler
+namespace SVNCompiler.Class
 {
-    internal class Utility
+    public class Utility
     {
         public static void MapClassToXmlFile(Type type, object obj, string path)
         {
@@ -88,6 +89,16 @@ namespace SVNCompiler
             string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
             string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
             return Regex.Replace(name, invalidRegStr, "_");
+        }
+
+        public static void Log(string status, string message, Log log)
+        {
+            Application.Current.Dispatcher.Invoke(
+                () => log.Items.Add(new LogItem
+                {
+                    Status = status,
+                    Message = message
+                }));
         }
     }
 }

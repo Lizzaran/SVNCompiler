@@ -77,9 +77,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Log.cs" />
-    <Compile Include="Utility.cs" />
-    <Compile Include="Config.cs" />
+    <Compile Include="Class\Compiler.cs" />
+    <Compile Include="Data\Log.cs" />
+    <Compile Include="Class\ProjectFile.cs" />
+    <Compile Include="Class\SvnUpdater.cs" />
+    <Compile Include="Class\Utility.cs" />
+    <Compile Include="Data\Config.cs" />
     <Page Include="Resources\Custom.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

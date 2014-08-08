@@ -53,35 +53,7 @@
     </Repository>
     <Repository Enabled="true">
       <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Automation</Url>
-    </Repository>
-    <Repository Enabled="true">
-      <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Soraka</Url>
-    </Repository>
-    <Repository Enabled="true">
-      <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Sona</Url>
-    </Repository>
-    <Repository Enabled="true">
-      <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Katarina</Url>
-    </Repository>
-    <Repository Enabled="true">
-      <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Karthus</Url>
-    </Repository>
-    <Repository Enabled="true">
-      <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Auto-Shield</Url>
-    </Repository>
-    <Repository Enabled="true">
-      <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Auto-Potion</Url>
-    </Repository>
-    <Repository Enabled="true">
-      <Author>GXion</Author>
-      <Url>https://github.com/Xionanx/GX-Zilean</Url>
+      <Url>https://github.com/Xionanx/Leaguesharp-Projects</Url>
     </Repository>
   </Repositories>
 </Config>

@@ -18,7 +18,7 @@ using System.ComponentModel;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-namespace SVNCompiler
+namespace SVNCompiler.Data
 {
     public class Log : INotifyPropertyChanged
     {
