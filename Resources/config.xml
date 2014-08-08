@@ -7,28 +7,81 @@
       <NewPath></NewPath>
     </References>
   </Settings>
-  <References>
-    <Reference>
-      <Name>LeagueSharp</Name>
-    </Reference>
-    <Reference>
-      <Name>SharpDX</Name>
-    </Reference>
-    <Reference>
-      <Name>LeagueSharp.Common</Name>
-    </Reference>
-    <Reference>
-      <Name>clipper_library</Name>
-    </Reference>
-    <Reference>
-      <Name>Igniter</Name>
-    </Reference>
-  </References>
   <Repositories>
     <Repository Enabled="true">
       <Info>Awesome Dude</Info>
       <Author>Lizzaran</Author>
       <Url>https://github.com/Lizzaran/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Info>LeagueSharp.Common</Info>
+      <Author>Esk0r</Author>
+      <Url>https://github.com/LeagueSharp/LeagueSharpCommon</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Info>That Syndra tho</Info>
+      <Author>Esk0r</Author>
+      <Url>https://github.com/Esk0r/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>RoachxD</Author>
+      <Url>https://github.com/RoachxD/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>trelli</Author>
+      <Url>https://github.com/trelli/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>detuks</Author>
+      <Url>https://github.com/detuks/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>Chogart</Author>
+      <Url>https://github.com/Chogart/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>Irvinee</Author>
+      <Url>https://github.com/Irvinee/leaguesharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>ehmehe</Author>
+      <Url>https://github.com/ehmehe/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>jasteph</Author>
+      <Url>https://github.com/jasteph/LeagueSharp</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Automation</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Soraka</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Sona</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Katarina</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Karthus</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Auto-Shield</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Auto-Potion</Url>
+    </Repository>
+    <Repository Enabled="true">
+      <Author>GXion</Author>
+      <Url>https://github.com/Xionanx/GX-Zilean</Url>
     </Repository>
   </Repositories>
 </Config>

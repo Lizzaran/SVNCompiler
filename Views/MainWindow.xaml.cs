@@ -178,22 +178,14 @@ namespace SVNCompiler.Views
                         IList rows = dataGrid.SelectedItems;
                         for (int i = rows.Count; i-- > 0;)
                         {
-                            switch (dataGrid.Name)
+                            string dir = Path.Combine(RepositoryDir,
+                                ((ConfigRepository) rows[i]).Url.GetHashCode().ToString("X"));
+                            if (Directory.Exists(dir))
                             {
-                                case "RepositoriesDataGrid":
-                                    string dir = Path.Combine(RepositoryDir,
-                                        ((ConfigRepository) rows[i]).Url.GetHashCode().ToString("X"));
-                                    if (Directory.Exists(dir))
-                                    {
-                                        Utility.ClearDirectory(dir);
-                                        Directory.Delete(dir);
-                                    }
-                                    Config.Repositories.Remove((ConfigRepository) rows[i]);
-                                    break;
-                                case "ReferencesDataGrid":
-                                    Config.References.Remove((ConfigReference) rows[i]);
-                                    break;
+                                Utility.ClearDirectory(dir);
+                                Directory.Delete(dir);
                             }
+                            Config.Repositories.Remove((ConfigRepository) rows[i]);
                         }
                     }
                 }
@@ -280,7 +272,7 @@ namespace SVNCompiler.Views
                 Utility.ClearDirectory(BuildDir);
                 if (Directory.Exists(RepositoryDir))
                 {
-                    string[] projectFiles = Directory.GetFiles(RepositoryDir, "*.csproj", SearchOption.AllDirectories);
+                    List<string> projectFiles = GetProjectFiles();
                     if (!projectFiles.Any())
                     {
                         Log(LogStatus.Error, "No *.csproj files found", () => CompileLog);
@@ -304,6 +296,20 @@ namespace SVNCompiler.Views
                 OnProgressFinish(CompileButton, "Compile");
             };
             bw.RunWorkerAsync();
+        }
+
+        private List<string> GetProjectFiles()
+        {
+            var projectFiles = new List<string>();
+            foreach (ConfigRepository repository in Config.Repositories)
+            {
+                string dir = Path.Combine(RepositoryDir, repository.Url.GetHashCode().ToString("X"), "trunk");
+                if (Directory.Exists(dir))
+                {
+                    projectFiles.AddRange(Directory.GetFiles(dir, "*.csproj", SearchOption.AllDirectories));
+                }
+            }
+            return projectFiles;
         }
 
         private void MoveCompiledFile(string path)
@@ -389,6 +395,8 @@ namespace SVNCompiler.Views
                     project.SetProperty("Configuration", selectedConfiguration);
                     project.Save();
                 }
+                project.SetProperty("PreBuildEvent", string.Empty);
+                project.SetProperty("PostBuildEvent", string.Empty);
                 project.SetProperty("PlatformTarget", selectedPlatform);
                 if (Config.Settings.References.Update)
                 {
@@ -396,13 +404,12 @@ namespace SVNCompiler.Views
                     {
                         if (item == null)
                             continue;
-                        if (Config.References.Any(s => s.Name == item.EvaluatedInclude))
+                        ProjectMetadata hintPath = item.GetMetadata("HintPath");
+                        if (hintPath != null && !string.IsNullOrWhiteSpace(hintPath.EvaluatedValue))
                         {
-                            ProjectMetadata hintPath = item.GetMetadata("HintPath");
-                            string fileName = hintPath != null
-                                ? Path.GetFileName(hintPath.EvaluatedValue)
-                                : string.Format("{0}.dll", item.EvaluatedInclude);
-                            item.SetMetadataValue("HintPath", Path.Combine(Config.Settings.References.NewPath, fileName));
+                            item.SetMetadataValue("HintPath",
+                                Path.Combine(Config.Settings.References.NewPath,
+                                    Path.GetFileName(hintPath.EvaluatedValue)));
                         }
                     }
                     Log(LogStatus.Ok, string.Format("References Updated - {0}", path), () => CompileLog);

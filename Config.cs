@@ -50,7 +50,6 @@ namespace SVNCompiler
     [XmlRoot(Namespace = "", IsNullable = false)]
     public class Config : INotifyPropertyChanged
     {
-        private ObservableCollection<ConfigReference> _references;
         private ObservableCollection<ConfigRepository> _repositories;
         private ConfigSettings _settings;
 
@@ -67,17 +66,6 @@ namespace SVNCompiler
         public ConfigProjectFile ProjectFile
         {
             get { return new ConfigProjectFile(); }
-        }
-
-        [XmlArrayItem("Reference", IsNullable = false)]
-        public ObservableCollection<ConfigReference> References
-        {
-            get { return _references; }
-            set
-            {
-                _references = value;
-                OnPropertyChanged("References");
-            }
         }
 
         [XmlArrayItem("Repository", IsNullable = false)]
@@ -148,30 +136,6 @@ namespace SVNCompiler
             {
                 _newPath = value;
                 OnPropertyChanged("NewPath");
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void OnPropertyChanged(string propertyName)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-
-    [XmlType(AnonymousType = true)]
-    public class ConfigReference : INotifyPropertyChanged
-    {
-        private string _name;
-
-        public string Name
-        {
-            get { return _name; }
-            set
-            {
-                _name = value;
-                OnPropertyChanged("Name");
             }
         }
 
