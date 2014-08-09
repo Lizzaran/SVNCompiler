@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -125,6 +124,12 @@ namespace SVNCompiler.Views
                     "GitHub: Lizzaran" + Environment.NewLine + "IRC: irc.rizon.net#leaguesharp - Appril");
         }
 
+        private async void Help_OnClick(object sender, RoutedEventArgs e)
+        {
+            await
+                this.ShowMessageAsync("Help", Utility.ReadResourceString("SVNCompiler.Resources.help.txt"));
+        }
+
         private void ReferencePath_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var textBox = (TextBox) sender;
@@ -177,12 +182,15 @@ namespace SVNCompiler.Views
                         IList rows = dataGrid.SelectedItems;
                         for (int i = rows.Count; i-- > 0;)
                         {
-                            string dir = Path.Combine(_repositoryDir,
-                                ((ConfigRepository) rows[i]).Url.GetHashCode().ToString("X"));
-                            if (Directory.Exists(dir))
+                            if (!string.IsNullOrWhiteSpace(((ConfigRepository) rows[i]).Url))
                             {
-                                Utility.ClearDirectory(dir);
-                                Directory.Delete(dir);
+                                string dir = Path.Combine(_repositoryDir,
+                                    ((ConfigRepository) rows[i]).Url.GetHashCode().ToString("X"));
+                                if (Directory.Exists(dir))
+                                {
+                                    Utility.ClearDirectory(dir);
+                                    Directory.Delete(dir);
+                                }
                             }
                             Config.Repositories.Remove((ConfigRepository) rows[i]);
                         }
@@ -271,13 +279,14 @@ namespace SVNCompiler.Views
         private List<string> GetProjectFiles()
         {
             var projectFiles = new List<string>();
-            foreach (ConfigRepository repository in Config.Repositories)
+            foreach (string dir in from repository in Config.Repositories
+                where !string.IsNullOrWhiteSpace(repository.Url)
+                select Path.Combine(_repositoryDir, repository.Url.GetHashCode().ToString("X"), "trunk")
+                into dir
+                where Directory.Exists(dir)
+                select dir)
             {
-                string dir = Path.Combine(_repositoryDir, repository.Url.GetHashCode().ToString("X"), "trunk");
-                if (Directory.Exists(dir))
-                {
-                    projectFiles.AddRange(Directory.GetFiles(dir, "*.csproj", SearchOption.AllDirectories));
-                }
+                projectFiles.AddRange(Directory.GetFiles(dir, "*.csproj", SearchOption.AllDirectories));
             }
             return projectFiles;
         }
@@ -300,7 +309,7 @@ namespace SVNCompiler.Views
             }
             catch (Exception ex)
             {
-                Utility.Log(LogStatus.Error, ex.Message.ToString(CultureInfo.InvariantCulture), CompileLog);
+                Utility.Log(LogStatus.Error, ex.Message, CompileLog);
             }
         }
 

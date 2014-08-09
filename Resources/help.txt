@@ -1,0 +1,9 @@
+﻿1. Edit, delete or change the predefined repositories to suit your needs.
+2. Go to the update tab and press update.
+2a. If you get any errors, try again in ~10 seconds. If you still get them, chances are high that a repository doesn't exist anymore.
+3. Set the reference path and enable the option to change them in the settings tab. 
+ - (e.g. "C:\LeagueSharp\Assemblies\System")
+4. Go the compile tab and press compile.
+4a. If you get any errors, open the Build directory and copy all .dll files to the defined reference path.
+4b. Compile again. If you still get any errors, check if your reference path is correct and you enabled the option for it.
+4c. If you still get any errors, chances are high that the project contains an error, nothing you can do about.

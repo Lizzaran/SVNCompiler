@@ -5,8 +5,8 @@
                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                       Title="SVNCompiler"
-                      Width="700"
-                      Height="500"
+                      Width="800"
+                      Height="600"
                       MinWidth="500"
                       MinHeight="450"
                       Closing="MetroWindow_Closing"
@@ -48,6 +48,21 @@
     </controls:MetroWindow.Resources>
     <controls:MetroWindow.RightWindowCommands>
         <controls:WindowCommands>
+            <Button Click="Help_OnClick" Cursor="Hand">
+                <StackPanel Orientation="Horizontal">
+                    <Rectangle Width="7"
+                               Height="12"
+                               Fill="{Binding RelativeSource={RelativeSource AncestorType=Button},
+                                              Path=Foreground}">
+                        <Rectangle.OpacityMask>
+                            <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_book_perspective_help}" />
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+                    <TextBlock Margin="4 0 0 0"
+                               VerticalAlignment="Center"
+                               Text="help" />
+                </StackPanel>
+            </Button>
             <Button Click="Credits_OnClick" Cursor="Hand">
                 <StackPanel Orientation="Horizontal">
                     <Rectangle Width="7"
@@ -207,7 +222,10 @@
                      VerticalAlignment="Top"
                      Header="Settings">
                 <Grid Background="White">
-                    <GroupBox Margin="10,10,10,0" Header="References" Height="103" VerticalAlignment="Top">
+                    <GroupBox Height="103"
+                              Margin="10,10,10,0"
+                              VerticalAlignment="Top"
+                              Header="References">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="0.7*" />

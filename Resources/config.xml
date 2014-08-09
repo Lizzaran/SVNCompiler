@@ -55,5 +55,9 @@
       <Author>GXion</Author>
       <Url>https://github.com/Xionanx/Leaguesharp-Projects</Url>
     </Repository>
+    <Repository Enabled="true">
+      <Author>Ecko</Author>
+      <Url>https://github.com/BotHappy/Ecko</Url>
+    </Repository>
   </Repositories>
 </Config>

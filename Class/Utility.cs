@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 using System;
 using System.IO;
 using System.Reflection;
@@ -43,6 +44,21 @@ namespace SVNCompiler.Class
             {
                 return serializer.Deserialize(reader);
             }
+        }
+
+        public static string ReadResourceString(string resource)
+        {
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
+            {
+                if (stream != null)
+                {
+                    using (var reader = new StreamReader(stream))
+                    {
+                        return reader.ReadToEnd();
+                    }
+                }
+            }
+            return string.Empty;
         }
 
         public static void CreateFileFromResource(string path, string resource, bool overwrite = false)
