@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -48,7 +49,6 @@ namespace SVNCompiler.Views
     /// </summary>
     public partial class MainWindow : INotifyPropertyChanged
     {
-        private readonly string _buildDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Builds");
         private readonly string _logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
         private readonly string _repositoryDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Repositories");
 
@@ -64,6 +64,8 @@ namespace SVNCompiler.Views
             Config = ((Config) Utility.MapXmlFileToClass(typeof (Config), "config.xml"));
             InitializeComponent();
             DataContext = this;
+            Title = string.Format("{0} {1}.{2}", Title, Assembly.GetExecutingAssembly().GetName().Version.Major,
+                Assembly.GetExecutingAssembly().GetName().Version.Minor);
         }
 
         public Config Config { get; set; }
@@ -117,6 +119,14 @@ namespace SVNCompiler.Views
             Utility.MapClassToXmlFile(typeof (Config), Config, "config.xml");
         }
 
+        private void MetroWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (Config.Settings.FirstRun)
+            {
+                Help_OnClick(null, null);
+            }
+        }
+
         private async void Credits_OnClick(object sender, RoutedEventArgs e)
         {
             await
@@ -128,6 +138,7 @@ namespace SVNCompiler.Views
         {
             await
                 this.ShowMessageAsync("Help", Utility.ReadResourceString("SVNCompiler.Resources.help.txt"));
+            Config.Settings.FirstRun = false;
         }
 
         private void ReferencePath_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -182,17 +193,25 @@ namespace SVNCompiler.Views
                         IList rows = dataGrid.SelectedItems;
                         for (int i = rows.Count; i-- > 0;)
                         {
-                            if (!string.IsNullOrWhiteSpace(((ConfigRepository) rows[i]).Url))
+                            switch (dataGrid.Name)
                             {
-                                string dir = Path.Combine(_repositoryDir,
-                                    ((ConfigRepository) rows[i]).Url.GetHashCode().ToString("X"));
-                                if (Directory.Exists(dir))
-                                {
-                                    Utility.ClearDirectory(dir);
-                                    Directory.Delete(dir);
-                                }
+                                case "RepositoriesDataGrid":
+                                    if (!string.IsNullOrWhiteSpace(((ConfigRepository) rows[i]).Url))
+                                    {
+                                        string dir = Path.Combine(_repositoryDir,
+                                            ((ConfigRepository) rows[i]).Url.GetHashCode().ToString("X"));
+                                        if (Directory.Exists(dir))
+                                        {
+                                            Utility.ClearDirectory(dir);
+                                            Directory.Delete(dir);
+                                        }
+                                    }
+                                    Config.Repositories.Remove((ConfigRepository) rows[i]);
+                                    break;
+                                case "PostbuildMoveDataGrid":
+                                    Config.Settings.Postbuild.Move.Remove((ConfigSettingsPostbuildMove) rows[i]);
+                                    break;
                             }
-                            Config.Repositories.Remove((ConfigRepository) rows[i]);
                         }
                     }
                 }
@@ -234,7 +253,6 @@ namespace SVNCompiler.Views
                 Application.Current.Dispatcher.Invoke(
                     () => OnProgressStart(CompileButton, CompileLog, () => CompileProgress));
                 Utility.ClearDirectory(_logDir);
-                Utility.ClearDirectory(_buildDir);
                 if (Directory.Exists(_repositoryDir))
                 {
                     List<string> projectFiles = GetProjectFiles();
@@ -297,20 +315,40 @@ namespace SVNCompiler.Views
             {
                 if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
                 {
-                    if (!Directory.Exists(_buildDir))
+                    string fileName = Path.GetFileName(path);
+                    string moveDirectory = MoveWildcardMatch(fileName);
+                    if (!string.IsNullOrWhiteSpace(moveDirectory))
                     {
-                        Directory.CreateDirectory(_buildDir);
+                        string newPath = moveDirectory + fileName;
+                        Utility.Log(
+                            (Config.Settings.Postbuild.Overwrite
+                                ? Utility.OverwriteFile(path, newPath)
+                                : Utility.RenameFileIfExists(path, newPath))
+                                ? LogStatus.Ok
+                                : LogStatus.Error, string.Format("Move - {0} | {1}", path, newPath), CompileLog);
                     }
-                    string newPath = Path.Combine(_buildDir, Path.GetFileName(path));
-                    File.Copy(path, newPath);
-                    Utility.Log(File.Exists(newPath) ? LogStatus.Ok : LogStatus.Error,
-                        string.Format("Move - {0} | {1}", path, newPath), CompileLog);
+                    else
+                    {
+                        Utility.Log(LogStatus.Info, string.Format("No Move-Wildcard found - {0}", path), CompileLog);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Utility.Log(LogStatus.Error, ex.Message, CompileLog);
             }
+        }
+
+        private string MoveWildcardMatch(string fileName)
+        {
+            foreach (ConfigSettingsPostbuildMove wildcard in from wildcard in Config.Settings.Postbuild.Move
+                let regex = new Regex(Utility.WildcardToRegex(wildcard.Wildcard))
+                where regex.Match(fileName).Success
+                select wildcard)
+            {
+                return wildcard.Directory;
+            }
+            return string.Empty;
         }
 
         private void OnProgressStart<T>(Button button, Log log, Expression<Func<T>> progress)

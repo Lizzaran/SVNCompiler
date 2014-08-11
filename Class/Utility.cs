@@ -1,4 +1,13 @@
-﻿/*
+﻿using System;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Xml.Serialization;
+using SVNCompiler.Data;
+
+/*
     Copyright (C) 2014 Nikita Bernthaler
 
     This program is free software: you can redistribute it and/or modify
@@ -14,15 +23,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-using System;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows;
-using System.Xml.Serialization;
-using SVNCompiler.Data;
 
 namespace SVNCompiler.Class
 {
@@ -115,6 +115,70 @@ namespace SVNCompiler.Class
                     Status = status,
                     Message = message
                 }));
+        }
+
+        public static string WildcardToRegex(string pattern)
+        {
+            return "^" + Regex.Escape(pattern)
+                .Replace(@"\*", ".*")
+                .Replace(@"\?", ".")
+                   + "$";
+        }
+
+        public static bool OverwriteFile(string file, string path)
+        {
+            try
+            {
+                string dir = Path.GetDirectoryName(path);
+                if (dir != null)
+                {
+                    if (!Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                }
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+                File.Move(file, path);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public static bool RenameFileIfExists(string file, string path)
+        {
+            try
+            {
+                int counter = 1;
+                string fileName = Path.GetFileNameWithoutExtension(file);
+                string fileExtension = Path.GetExtension(file);
+                string newPath = path;
+                string pathDirectory = Path.GetDirectoryName(path);
+                if (pathDirectory != null)
+                {
+                    if (!Directory.Exists(pathDirectory))
+                    {
+                        Directory.CreateDirectory(pathDirectory);
+                    }
+                    while (File.Exists(newPath))
+                    {
+                        string tmpFileName = string.Format("{0} ({1})", fileName, counter++);
+                        newPath = Path.Combine(pathDirectory, tmpFileName + fileExtension);
+                    }
+                    File.Move(file, newPath);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            return false;
         }
     }
 }

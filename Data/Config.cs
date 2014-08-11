@@ -92,7 +92,19 @@ namespace SVNCompiler.Data
     [XmlType(AnonymousType = true)]
     public class ConfigSettings : INotifyPropertyChanged
     {
+        private bool _firstRun;
+        private ConfigSettingsPostbuild _postbuild;
         private ConfigSettingsReferences _references;
+
+        public bool FirstRun
+        {
+            get { return _firstRun; }
+            set
+            {
+                _firstRun = value;
+                OnPropertyChanged("FirstRun");
+            }
+        }
 
         public ConfigSettingsReferences References
         {
@@ -101,6 +113,16 @@ namespace SVNCompiler.Data
             {
                 _references = value;
                 OnPropertyChanged("References");
+            }
+        }
+
+        public ConfigSettingsPostbuild Postbuild
+        {
+            get { return _postbuild; }
+            set
+            {
+                _postbuild = value;
+                OnPropertyChanged("Postbuild");
             }
         }
 
@@ -136,6 +158,77 @@ namespace SVNCompiler.Data
             {
                 _newPath = value;
                 OnPropertyChanged("NewPath");
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    [XmlType(AnonymousType = true)]
+    public class ConfigSettingsPostbuild : INotifyPropertyChanged
+    {
+        private ObservableCollection<ConfigSettingsPostbuildMove> _move;
+        private bool _overwrite;
+
+        [XmlElement("Move")]
+        public ObservableCollection<ConfigSettingsPostbuildMove> Move
+        {
+            get { return _move; }
+            set
+            {
+                _move = value;
+                OnPropertyChanged("Move");
+            }
+        }
+
+        public bool Overwrite
+        {
+            get { return _overwrite; }
+            set
+            {
+                _overwrite = value;
+                OnPropertyChanged("Overwrite");
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    [XmlType(AnonymousType = true)]
+    public class ConfigSettingsPostbuildMove : INotifyPropertyChanged
+    {
+        private string _directory;
+        private string _wildcard;
+
+        public string Wildcard
+        {
+            get { return _wildcard; }
+            set
+            {
+                _wildcard = value;
+                OnPropertyChanged("Wildcard");
+            }
+        }
+
+        public string Directory
+        {
+            get { return _directory; }
+            set
+            {
+                _directory = value;
+                OnPropertyChanged("Directory");
             }
         }
 

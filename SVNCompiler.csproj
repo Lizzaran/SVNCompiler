@@ -78,6 +78,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Class\Compiler.cs" />
+    <Compile Include="Class\Converter.cs" />
+    <Compile Include="Class\Validation.cs" />
     <Compile Include="Data\Log.cs" />
     <Compile Include="Class\ProjectFile.cs" />
     <Compile Include="Class\SvnUpdater.cs" />
@@ -136,7 +138,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\config.xml" />
+    <EmbeddedResource Include="Resources\config.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Icon.ico" />

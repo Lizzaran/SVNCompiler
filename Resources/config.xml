@@ -2,10 +2,22 @@
 
 <Config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Settings>
+    <FirstRun>true</FirstRun>
     <References>
       <Update>false</Update>
       <NewPath></NewPath>
     </References>
+    <Postbuild>
+      <Overwrite>true</Overwrite>
+      <Move>
+        <Wildcard>*.dll</Wildcard>
+        <Directory>Builds\</Directory>
+      </Move>
+      <Move>
+        <Wildcard>*.exe</Wildcard>
+        <Directory>Builds\</Directory>
+      </Move>
+    </Postbuild>
   </Settings>
   <Repositories>
     <Repository Enabled="true">
